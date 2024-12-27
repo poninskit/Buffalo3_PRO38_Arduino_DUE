@@ -66,3 +66,7 @@ action = NONE;
 
 
 All you need is Atom + Platform IO + ( Arduino Due, remote, TFT) and the repository:
+
+
+see for more details:
+https://www.diyaudio.com/community/threads/c-easy-and-scalable-software-for-biii38pro.337580/
