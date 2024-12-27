@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "*.inc": "cpp",
-        "xtr1common": "cpp",
-        "type_traits": "cpp"
-    }
-}
