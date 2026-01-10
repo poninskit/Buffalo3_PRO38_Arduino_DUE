@@ -33,6 +33,7 @@ enum ACTION{
   TOGGLE_JE,
   ENTER,
   MENU,
+  PLAY_PAUSE,
   POWER_ON,
   RESET
 };

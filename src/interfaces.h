@@ -6,6 +6,8 @@
 #include <IRremote2.h> // Remote
 #include <URTouch.h> // For Touchscreen
 
+
+
 //==============================================================================
 
 class RemoteInterface:IRrecv{
@@ -15,6 +17,7 @@ class RemoteInterface:IRrecv{
 
   private:
     decode_results results;
+    unsigned long lastRemoteMillis = 0; //Prevente Debounce in Remote,  it keeps track of time between clicks
 
     ACTION action;  // actual action
     ACTION prevAct; // last action taken for repeat

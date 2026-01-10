@@ -15,7 +15,7 @@
 
 //------------------------------------------------------------------------------
 #define READ_DAC_CYCLES   10000 //read the DAC Register every n-cycles, every 1s is enough
-#define VERSION "v.1.1.1"
+#define VERSION "v.1.1.2"
 //------------------------------------------------------------------------------
 // classes declarations
 
@@ -180,6 +180,7 @@ void loop() {
       if(interface == TOUCH) delay_ms = delay_hold;
       break;
     case ENTER:
+    case PLAY_PAUSE:
       vol = dac->muteVolume();
       if(currentPage == MAIN_MENU) tftGraphics->printVolume( vol );
       if(interface == TOUCH) delay_ms = delay_switch;      
