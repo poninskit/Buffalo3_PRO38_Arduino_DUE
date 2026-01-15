@@ -28,6 +28,23 @@ ACTION RemoteInterface::getAction( PAGE page ){
   uint32_t val = results.value;
   LOG( "\nRemote RAW:" + String( val, HEX ) + "  " );
 
+
+  // Lower byte order of argument depends on IR library.
+  // For standard NEC (32 bits, LSB first):
+  uint16_t custom_id = (val & 0xFFFF);          // bits 0–15
+  uint8_t  pair_id   = (val >> 16) & 0x7F;      // bits 16–22, ignore for now
+  uint8_t  command   = (val >> 8) & 0xFF;       // bits 24–31 if you’ve shifted differently
+
+
+  // Ignore non‑Apple NEC IDs
+  const uint16_t APPLE_CUSTOM_ID = 0x77E1;  // Apple ID for IR Remotes
+  const uint16_t APPLE_CUSTOM_ID_SWAP = 0xE177; // Apple ID for IR Remotes, some libraries may swap endiannes and show 0xE177
+  if (custom_id != APPLE_CUSTOM_ID && custom_id != APPLE_CUSTOM_ID_SWAP) {
+    resume();
+    return NONE;
+  }
+
+  
   // 1. Handle Repeat
   if (val == 0xFFFFFFFF) {
     resume();
@@ -42,11 +59,6 @@ ACTION RemoteInterface::getAction( PAGE page ){
     resume();
     return NONE; 
   }
-
-  // 2. Extract the Command
-  // Based on your log "77e1502a", we need to grab the "50" part.
-  // We shift right by 8 bits to remove "2a", then mask the next 8 bits.
-  uint32_t command = (val >> 8) & 0xFF;
 
   LOG( "Extracted Command: " + String(command, HEX) );
 
@@ -78,7 +90,6 @@ ACTION RemoteInterface::getAction( PAGE page ){
     default:
       action = NONE;
       break;
-
 
   }
 
