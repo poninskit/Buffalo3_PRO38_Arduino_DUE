@@ -39,7 +39,7 @@ ACTION RemoteInterface::getAction( PAGE page ){
   // Ignore non‑Apple NEC IDs
   const uint16_t APPLE_CUSTOM_ID = 0x77E1;  // Apple ID for IR Remotes
   const uint16_t APPLE_CUSTOM_ID_SWAP = 0xE177; // Apple ID for IR Remotes, some libraries may swap endiannes and show 0xE177
-  if (custom_id != APPLE_CUSTOM_ID && custom_id != APPLE_CUSTOM_ID_SWAP) {
+  if (custom_id != APPLE_CUSTOM_ID) {
     resume();
     return NONE;
   }
