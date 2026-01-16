@@ -39,11 +39,11 @@ ACTION RemoteInterface::getAction( PAGE page ){
   uint8_t  command    = (val >> 8)  & 0xFF;    // bits 16–22, ignore for now
   uint8_t  pair_id    =  val        & 0xFF;    // bits 24–31 if you’ve shifted differently
 
-    LOG(  "\nRemote RAW:" + String( val, HEX ) 
-        + " -> id: "      + String( custom_id, HEX ) 
-        + " / command: "  + String( command, HEX )
-        + " / pair_id: "  + String( pair_id, HEX ));
-
+  LOG(  "\nRemote RAW:"   + String( val, HEX ) 
+      + " -> custom_id: " + String( custom_id, HEX ) 
+      + " / command: "    + String( command, HEX )
+      + " / pair_id: "    + String( pair_id, HEX ));
+  // Expected Output example: Remote RAW: 77e1b036 -> custom_id : 77e1 / command: b0 / pair_id: 36
 
   
   // 1. Handle Repeat
