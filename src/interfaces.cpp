@@ -26,23 +26,24 @@ ACTION RemoteInterface::getAction( PAGE page ){
     return NONE;
 
   uint32_t val = results.value;
-  LOG( "\nRemote RAW:" + String( val, HEX ) + "  " );
-
 
   // Lower byte order of argument depends on IR library.
   // For standard NEC (32 bits, LSB first):
-  uint16_t custom_id = (val & 0xFFFF);          // bits 0–15
-  uint8_t  pair_id   = (val >> 16) & 0x7F;      // bits 16–22, ignore for now
-  uint8_t  command   = (val >> 8) & 0xFF;       // bits 24–31 if you’ve shifted differently
+  // Raw value: 0x77e1b036
+  // Bit positions (MSB → LSB):
+  // 31........24 23........16 15........8 7........0
+  //    77           e1          b0         36
+  // But NEC logical order is:
+  // Address (LSB) | Address (MSB) | Command | ~Command
+  uint16_t custom_id  = (val >> 16) & 0xFFFF;  // bits 0–15 
+  uint8_t  command    = (val >> 8)  & 0xFF;    // bits 16–22, ignore for now
+  uint8_t  pair_id    =  val        & 0xFF;    // bits 24–31 if you’ve shifted differently
 
+    LOG(  "\nRemote RAW:" + String( val, HEX ) 
+        + " -> id: "      + String( custom_id, HEX ) 
+        + " / command: "  + String( command, HEX )
+        + " / pair_id: "  + String( pair_id, HEX ));
 
-  // Ignore non‑Apple NEC IDs
-  const uint16_t APPLE_CUSTOM_ID = 0x77E1;  // Apple ID for IR Remotes
-  const uint16_t APPLE_CUSTOM_ID_SWAP = 0xE177; // Apple ID for IR Remotes, some libraries may swap endiannes and show 0xE177
-  if (custom_id != APPLE_CUSTOM_ID) {
-    resume();
-    return NONE;
-  }
 
   
   // 1. Handle Repeat
@@ -52,13 +53,22 @@ ACTION RemoteInterface::getAction( PAGE page ){
     return NONE;
   }
 
-  // 2. DEBOUNCE CHECK
+
+  // 2. Ignore non‑Apple NEC IDs
+  const uint16_t APPLE_CUSTOM_ID = 0x77E1;  // Apple ID for IR Remotes
+  if (custom_id != APPLE_CUSTOM_ID) {
+    resume();
+    return NONE;
+  }
+
+  // 3. DEBOUNCE CHECK
   // If the last button press was less than 250ms ago, ignore this one.
   // This prevents the "double action" on Play/Enter/Menu.
   if (millis() - lastRemoteMillis < 200) {
     resume();
     return NONE; 
   }
+
 
   LOG( "Extracted Command: " + String(command, HEX) );
 
