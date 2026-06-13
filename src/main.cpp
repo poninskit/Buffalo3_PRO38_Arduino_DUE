@@ -199,7 +199,8 @@ void loop() {
 
 
     // Periodic DAC polling
-    if (millis() - lastPoll >= 1000) {  // every 1 second
+    // Regular reading needs stable I2C communication can otherwise cause issues
+    if (millis() - lastPoll >= 1500) {  // every 1,5 second
         lastPoll = millis();
 
         bool wasAvailable = dac->isAvailable();
@@ -221,7 +222,7 @@ void loop() {
                 fsr,
                 (lock_st != No_Lock) ? dac->getSampleRateString(fsr) : ""
             );
-        }
+        } 
     }
 
   

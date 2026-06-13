@@ -68,6 +68,7 @@
     Locked_DSD,
     Locked_I2S,
     Locked_SPDIF,
+    
     Locked_DOP,
     Locked_Unknown,
     Unknown

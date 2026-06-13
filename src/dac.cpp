@@ -1,6 +1,7 @@
 #include <dac.h>
 #include "driver/i2c.h"
 
+
 #define I2C_PORT I2C_NUM_0 // Default SDA 19, SCL 20, ESP32 has two I2C ports: I2C_NUM_0 and I2C_NUM_1
 #define I2C_TIMEOUT 1000 // ms
 
@@ -11,9 +12,9 @@ DAC::DAC()
     startDAC();
 }
 
+
 //------------------------------------------------------------------------------
 void DAC::startDAC(){
-
 
     //Power DAC  UP
     powerDACup();
@@ -32,7 +33,6 @@ void DAC::startDAC(){
     //set initial volume
     setVolume( dac_volume );
     setInput( input );
-
 
 }
 
@@ -127,7 +127,6 @@ bool DAC::checkAvailability(){
 //------------------------------------------------------------------------------
 void DAC::setDefDacConfig(){
 
-
     //set default JE
     R13_JE_THD_COMP_CONFIG r13; 
   	r13.byte = R13_DEFAULT;
@@ -143,16 +142,12 @@ void DAC::setDefDacConfig(){
   	r7.byte = R7_DEFAULT;
   	writeRegister(DAC_ADDRESS, 7, r7.byte);
 
-
-  
 return;
 }
 
 //------------------------------------------------------------------------------
 // read the port expander switch states
 void DAC::readSwitchStates() {
-
-
 
 	uint8_t s1 = readRegister(PE_ADDRESS, PE_GPIOA);
 	uint8_t s2 = readRegister(PE_ADDRESS, PE_GPIOB);
@@ -161,15 +156,11 @@ void DAC::readSwitchStates() {
 		sw2.byte = s2;
 	}
 
-
-
 return;
 }
 
-
 //------------------------------------------------------------------------------
 ERROR_CODE DAC::configureDAC(){
-
 
   //Read Switch states
   readSwitchStates();
@@ -188,8 +179,6 @@ ERROR_CODE DAC::configureDAC(){
   	// 	r1.input_select = R1_INPUT_SELECT_SPDIF;
   	// }
   	// writeRegister(DAC_ADDRESS, 1, r1.byte);
-
-
 
     R2_SERIAL_DATA_AUTOMUTE_CONFIG r2;
   	r2.byte = R2_DEFAULT;
@@ -286,28 +275,25 @@ ERROR_CODE DAC::configureDAC(){
   	writeRegister(DAC_ADDRESS, 37, r37.byte);
 
 
-
 return No_Error;
 }
-
 //------------------------------------------------------------------------------
 byte DAC::getVolume(){
-  
   return dac_volume;
 }
+
 //------------------------------------------------------------------------------
 DAC_INPUT DAC::getInput(){
   return input;
 }
-
 //------------------------------------------------------------------------------
 LOCK_STATUS DAC::getLockStatus(){
 
   R64_CHIP_ID_STATUS r64;
   r64.byte = readRegister(DAC_ADDRESS, 64);
-  
+ 
   LOCK_STATUS result = LOCK_STATUS::No_Lock;  // collect result first
-  
+
   if (r64.lock_status == 1){
     R100_INPUT_STATUS r100;
     r100.byte = readRegister(DAC_ADDRESS, 100);
@@ -317,7 +303,6 @@ LOCK_STATUS DAC::getLockStatus(){
     else if(r100.dop_is_valid)   result = LOCK_STATUS::Locked_DOP;
     else                         result = LOCK_STATUS::Locked_Unknown;
   }
-
 
   return result;
 }
@@ -337,17 +322,14 @@ char* DAC::dacLockString(LOCK_STATUS lock)
     case No_Lock:         return (char*)("No Lock");
     default:              return (char*)("No Lock");
     }
-  
 }
-
 
 //------------------------------------------------------------------------------
 uint32_t DAC::getRawSampleRate(){
 
-
   // Registers 66-69 are read only and contain the 32bit DPLL number
   // FSR = (dpll_number * fmck) / 4294967296
-  
+
   volatile unsigned long DPLLNum = 0; // Variable to hold DPLL value
   uint8_t MCLK = 10; //MHz Clock Hardware Fixed for Buffallo 3 ES9038pro  // Value of Clock used (in 10s of MHz). 10 = 100MHz.
 
@@ -362,7 +344,6 @@ uint32_t DAC::getRawSampleRate(){
   DPLLNum |= readRegister(DAC_ADDRESS, 66); //0x42
 
   uint32_t fsr = ( DPLLNum * MCLK ) / 42940; //2^32 = 4 294 967 296 / Mega = 4 295 
-
 
  return fsr;
 }
@@ -557,9 +538,12 @@ ERROR_CODE DAC::setVolume( uint8_t vol ){
     uint8_t vol_dB = 99 - vol; //possible 0 to -127dB , vol (0-99) 0 MAX, 255 min
     vol_dB = vol_dB * 2;      //increase scale from 0 - 198, step x2, 0,5dB x 2 = 1dB
     //write volume byte to register 16
-    writeRegister( DAC_ADDRESS, 16, vol_dB );
+    ERROR_CODE err = writeRegister( DAC_ADDRESS, 16, vol_dB );
+    if (err != No_Error) {
+      LOG("DAC volume write failed");
+      return err;
+    }
     dac_volume = vol;
-
 
   return No_Error; //readRegister(16);
 }
@@ -580,9 +564,7 @@ void DAC::setFIRShape(uint8_t value)
 {
     R7_FILTER_BW_SYSTEM_MUTE r7;
     r7.byte = readRegister(DAC_ADDRESS, 7);
-
     r7.filter_shape = value;
-
     writeRegister(DAC_ADDRESS, 7, r7.byte);
 }
 //------------------------------------------------------------------------------
@@ -860,35 +842,50 @@ char* DAC::getJitterElString(uint8_t value){
     }
 }
 
-
 //------------------------------------------------------------------------------
 ERROR_CODE DAC::writeRegister(int device, byte regAddr, byte dataVal){
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (device << 1) | I2C_MASTER_WRITE, true);
-    i2c_master_write_byte(cmd, regAddr, true);
-    i2c_master_write_byte(cmd, dataVal, true);
-    i2c_master_stop(cmd);
-    esp_err_t ret = i2c_master_cmd_begin(I2C_PORT, cmd, pdMS_TO_TICKS(I2C_TIMEOUT));
-    i2c_cmd_link_delete(cmd);
-    return (ret == ESP_OK) ? No_Error : Wire_Trans_Error;
+    for (int attempt = 0; attempt < 2; attempt++) {
+      i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+      i2c_master_start(cmd);
+      i2c_master_write_byte(cmd, (device << 1) | I2C_MASTER_WRITE, true);
+      i2c_master_write_byte(cmd, regAddr, true);
+      i2c_master_write_byte(cmd, dataVal, true);
+      i2c_master_stop(cmd);
+      esp_err_t ret = i2c_master_cmd_begin(I2C_PORT, cmd, pdMS_TO_TICKS(I2C_TIMEOUT));
+      i2c_cmd_link_delete(cmd);
+      if (ret == ESP_OK) {
+        return No_Error;
+      }
+      delay(1);
+    }
+    LOG("DAC I2C write failed");
+    return Wire_Trans_Error;
 }
 
 
 //------------------------------------------------------------------------------
 byte DAC::readRegister(int device, byte regAddr){
     uint8_t data = 0;
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    // Write register address
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (device << 1) | I2C_MASTER_WRITE, true);
-    i2c_master_write_byte(cmd, regAddr, true);
-    // Repeated start, then read
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (device << 1) | I2C_MASTER_READ, true);
-    i2c_master_read_byte(cmd, &data, I2C_MASTER_NACK);
-    i2c_master_stop(cmd);
-    i2c_master_cmd_begin(I2C_PORT, cmd, pdMS_TO_TICKS(I2C_TIMEOUT));
-    i2c_cmd_link_delete(cmd);
+    for (int attempt = 0; attempt < 2; attempt++) {
+      i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+      // Write register address
+      i2c_master_start(cmd);
+      i2c_master_write_byte(cmd, (device << 1) | I2C_MASTER_WRITE, true);
+      i2c_master_write_byte(cmd, regAddr, true);
+      // Repeated start, then read
+      i2c_master_start(cmd);
+      i2c_master_write_byte(cmd, (device << 1) | I2C_MASTER_READ, true);
+      i2c_master_read_byte(cmd, &data, I2C_MASTER_NACK);
+      i2c_master_stop(cmd);
+      esp_err_t ret = i2c_master_cmd_begin(I2C_PORT, cmd, pdMS_TO_TICKS(I2C_TIMEOUT));
+      i2c_cmd_link_delete(cmd);
+      if (ret == ESP_OK) {
+        return data;
+      }
+      data = 0;
+      delay(1);
+    }
+    LOG("DAC I2C read failed");
     return data;
+
 }
