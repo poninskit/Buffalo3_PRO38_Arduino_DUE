@@ -146,15 +146,38 @@ void Graphics::updateStyles()
 
 
     if (vol_arc) {
-        lv_obj_set_style_arc_color(vol_arc, button_color, LV_PART_INDICATOR); // indicator (filled part)
-        lv_obj_set_style_bg_color(vol_arc, button_color, LV_PART_KNOB); // knob (the handle)
+        // darker version of the current button color
+        lv_color_t arc_color = lv_color_darken(button_color, LV_OPA_0); //20
         if (darkMode) {
             // dark mode → subtle grey track
-            lv_obj_set_style_arc_color(vol_arc, flatui_colors_sys[3], LV_PART_MAIN);
+            arc_color = lv_color_darken(button_color, LV_OPA_0); //40
+            lv_obj_set_style_arc_color(vol_arc, lv_color_lighten(flatui_colors_sys[3], LV_OPA_0), LV_PART_MAIN);
         } else {
             // light mode → darker track for contrast
             lv_obj_set_style_arc_color(vol_arc, flatui_colors_sys[4], LV_PART_MAIN);
         }
+        lv_obj_set_style_arc_color(vol_arc, arc_color, LV_PART_INDICATOR); // indicator (filled part)
+        lv_obj_set_style_bg_color(vol_arc, arc_color, LV_PART_KNOB); // knob (the handle)
+    
+    }
+
+
+    if (brightness_slider) {
+        // darker version of the current button color
+        lv_color_t slider_color = lv_color_darken(button_color, LV_OPA_0); //20
+
+        // Make the inactive track and the filled portion visible.
+        lv_obj_set_style_bg_opa(brightness_slider, LV_OPA_COVER, LV_PART_MAIN);
+
+        if (darkMode) {
+            slider_color = lv_color_darken(button_color, LV_OPA_0); //40
+            lv_obj_set_style_bg_color(brightness_slider, lv_color_lighten(flatui_colors_sys[3], LV_OPA_0), LV_PART_MAIN);
+        } else {
+            lv_obj_set_style_bg_color(brightness_slider, flatui_colors_sys[4], LV_PART_MAIN);
+        }
+
+        lv_obj_set_style_bg_color(brightness_slider, slider_color, LV_PART_INDICATOR);
+        lv_obj_set_style_bg_color(brightness_slider, slider_color, LV_PART_KNOB);
     }
 
 

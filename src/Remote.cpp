@@ -107,10 +107,10 @@ ACTION RemoteInterface::getAction( PAGE page )
 
     // ---- Map command to action ----------------------------------------------
     switch ( command ) {
-        case 0x0B: action = CHANNEL_LEFT;   break; //Up
-        case 0x0D: action = CHANNEL_RIGHT;  break; //Down
-        case 0x07: action = VOLUME_UP;      break; //Right
-        case 0x08: action = VOLUME_DOWN;    break; //Left
+        case 0x0B: action = VOLUME_UP;      break; //Up
+        case 0x0D: action = VOLUME_DOWN;    break; //Down
+        case 0x07: action = CHANNEL_RIGHT;  break; //Right
+        case 0x08: action = CHANNEL_LEFT;   break; //Left
         case 0x5D: action = ENTER;          break; //Center
         case 0x02: action = MENU;           break; //Menu
         case 0x5E: action = PLAY_PAUSE;     break; //Play/Pause
